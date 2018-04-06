@@ -1,0 +1,6 @@
+[package]
+name = "hardy"
+version = "0.1.0"
+authors = ["RJ Nowling <rnowling@gmail.com>"]
+
+[dependencies]
