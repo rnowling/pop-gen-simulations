@@ -12,6 +12,9 @@ use std::mem;
 // There is no mutation and the sex of the parents doesn't matter.
 // Mating is random.
 
+const HOMOZYGOUS: u8 = 2;
+
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct Individual(u8, u8);
 impl Individual {
@@ -57,10 +60,10 @@ impl Population {
         }
     }
 
-    pub fn count_genotypes(&mut self) -> HashMap<Individual, u32> {
-        let mut counts: HashMap<Individual, u32> = HashMap::new();
+    pub fn count_genotypes(&mut self) -> HashMap<&Individual, u32> {
+        let mut counts: HashMap<&Individual, u32> = HashMap::new();
     
-        for individual in self.parents {
+        for individual in self.parents.iter() {
             let count = counts.entry(individual).or_insert(0u32);
             *count += 1;
         }
@@ -71,42 +74,44 @@ impl Population {
     pub fn swap_generations(&mut self) -> () {
         mem::swap(&mut self.parents, &mut self.children);
     }
-}
 
-const HOMOZYGOUS: u8 = 2;
+    fn mate<R: Rng>(&mut self, rng: &mut R) -> () {
+        let parent_range = Range::new(0usize, self.n_individuals);
+        let allele_range = Range::new_inclusive(0usize, 1usize);
 
-fn mate<R: Rng>(population: &mut Population, rng: &mut R) -> () {
-    let parent_range = Range::new(0usize, population.n_individuals);
-    let allele_range = Range::new_inclusive(0usize, 1usize);
+        for mut child in self.children.iter_mut() {
+            child.0 = 0;
+            child.1 = 0;
 
-    for mut child in population.children {
-        child.0 = 0;
-        child.1 = 0;
-        
-        let parent1 = population.parents[parent_range.sample(rng)];
-        let parent2 = population.parents[parent_range.sample(rng)];
+            let parent1: &Individual = &self.parents[parent_range.sample(rng)];
+            let parent2: &Individual = &self.parents[parent_range.sample(rng)];
 
-        match parent1 {
-            Individual(HOMOZYGOUS, _) => child.0 = 1,
-            Individual(_, HOMOZYGOUS) => child.1 = 1,
-            _ => if rng.gen::<bool>() {
-                child.0 = 1;
-            } else {
-                child.1 = 1;
+            match parent1 {
+                &Individual(HOMOZYGOUS, _) => child.0 = 1,
+                &Individual(_, HOMOZYGOUS) => child.1 = 1,
+                _ => if rng.gen::<bool>() {
+                    child.0 = 1;
+                } else {
+                    child.1 = 1;
+                }
             }
+
+            match parent2 {
+                &Individual(HOMOZYGOUS, _) => child.0 += 1,
+                &Individual(_, HOMOZYGOUS) => child.1 += 1,
+                _ => if rng.gen::<bool>() {
+                    child.0 += 1;
+                } else {
+                    child.1 += 1;
+                }
+            }
+
         }
 
-        match parent2 {
-            Individual(HOMOZYGOUS, _) => child.0 += 1,
-            Individual(_, HOMOZYGOUS) => child.1 += 1,
-            _ => if rng.gen::<bool>() {
-                child.0 += 1;
-            } else {
-                child.1 += 1;
-            }
-        }
     }
+
 }
+
 
 
 fn main() {
@@ -117,12 +122,11 @@ fn main() {
 
     let mut rng = thread_rng();
 
-    let population = Population::new(population_size,
+    let mut population = Population::new(population_size,
                                      &mut rng);
 
     for _i in 0..generations {
-        mate(&mut population, &mut rng);
-
-       population.swap_generations();
+        population.mate(&mut rng);
+        population.swap_generations();
     }    
 }
