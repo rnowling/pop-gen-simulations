@@ -79,31 +79,27 @@ fn mate<R: Rng>(population: &mut Population, rng: &mut R) -> () {
     let parent_range = Range::new(0usize, population.n_individuals);
     let allele_range = Range::new_inclusive(0usize, 1usize);
 
-    for child in population.children {
+    for mut child in population.children {
         child.0 = 0;
         child.1 = 0;
         
         let parent1 = population.parents[parent_range.sample(rng)];
         let parent2 = population.parents[parent_range.sample(rng)];
 
-        if parent1.0 == HOMOZYGOUS {
-            child.0 = 1;
-        } else if parent1.1 == HOMOZYGOUS {
-            child.1 = 1;
-        } else {
-            if allele_range.sample(rng) == 0 {
+        match parent1 {
+            Individual(HOMOZYGOUS, _) => child.0 = 1,
+            Individual(_, HOMOZYGOUS) => child.1 = 1,
+            _ => if rng.gen::<bool>() {
                 child.0 = 1;
             } else {
                 child.1 = 1;
             }
         }
 
-        if parent2.0 == HOMOZYGOUS {
-            child.0 += 1;
-        } else if parent2.1 == HOMOZYGOUS {
-            child.1 += 1;
-        } else {
-            if allele_range.sample(rng) == 0 {
+        match parent2 {
+            Individual(HOMOZYGOUS, _) => child.0 += 1,
+            Individual(_, HOMOZYGOUS) => child.1 += 1,
+            _ => if rng.gen::<bool>() {
                 child.0 += 1;
             } else {
                 child.1 += 1;
