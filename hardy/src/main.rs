@@ -2,7 +2,9 @@ extern crate rand;
 
 use rand::{Rng, thread_rng};
 use rand::distributions::{Distribution, Range};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::cmp::Ordering;
+use std::fmt;
 use std::mem;
 
 // Simulation of Hardy model
@@ -15,13 +17,42 @@ use std::mem;
 const HOMOZYGOUS: u8 = 2;
 
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct Individual(u8, u8);
-impl Individual {
-    pub fn new(allele1: u8, allele2: u8) -> Individual {
-        Individual(allele1, allele2)
+
+impl fmt::Display for Individual {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
     }
 }
+
+impl Ord for Individual {
+    fn cmp(&self, other: &Individual) -> Ordering {
+        if self.0 < other.0 {
+            Ordering::Less
+        } else if self.0 > other.0 {
+            Ordering::Greater
+        } else if self.1 < other.1 {
+            Ordering::Less
+        } else if self.1 > other.1 {
+            Ordering::Greater
+        } else {
+            Ordering::Equal
+        }
+    }
+}
+
+impl PartialOrd for Individual {
+    fn partial_cmp(&self, other: &Individual) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// impl Individual {
+//     pub fn new(allele1: u8, allele2: u8) -> Individual {
+//         Individual(allele1, allele2)
+//     }
+// }
 
 struct Population {
     pub n_individuals: usize,
@@ -60,12 +91,18 @@ impl Population {
         }
     }
 
-    pub fn count_genotypes(&mut self) -> HashMap<&Individual, u32> {
-        let mut counts: HashMap<&Individual, u32> = HashMap::new();
+    pub fn genotype_frequencies(&self) -> BTreeMap<Individual, f64> {
+        let mut counts: BTreeMap<Individual, f64> = BTreeMap::new();
     
-        for individual in self.parents.iter() {
-            let count = counts.entry(individual).or_insert(0u32);
-            *count += 1;
+        for genotype in &self.parents {
+            let count = counts.entry(*genotype).or_insert(0f64);
+            *count += 1.0f64;
+        }
+
+        let sum: f64 = counts.values().sum();
+
+        for (_, count) in &mut counts {
+            *count /= sum;
         }
 
         counts
@@ -75,9 +112,8 @@ impl Population {
         mem::swap(&mut self.parents, &mut self.children);
     }
 
-    fn mate<R: Rng>(&mut self, rng: &mut R) -> () {
+    pub fn mate<R: Rng>(&mut self, rng: &mut R) -> () {
         let parent_range = Range::new(0usize, self.n_individuals);
-        let allele_range = Range::new_inclusive(0usize, 1usize);
 
         for mut child in self.children.iter_mut() {
             child.0 = 0;
@@ -113,19 +149,21 @@ impl Population {
 }
 
 
-
 fn main() {
-    println!("Hello, world!");
-
-    let population_size = 10000;
+    let population_size = 100000;
     let generations = 10;
 
     let mut rng = thread_rng();
 
     let mut population = Population::new(population_size,
                                      &mut rng);
-
-    for _i in 0..generations {
+    for i in 0..generations {
+        println!("Population: {}", i);
+        for (genotype, freq) in &population.genotype_frequencies() {
+            println!("Genotype: {}, Frequency: {}", genotype, freq);
+        }
+        println!();
+        
         population.mate(&mut rng);
         population.swap_generations();
     }    
