@@ -148,7 +148,6 @@ impl Population {
 
 }
 
-
 fn main() {
     let population_size = 100000;
     let generations = 10;
