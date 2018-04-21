@@ -1,8 +1,10 @@
+extern crate itertools;
 extern crate rand;
 
+use itertools::Itertools;
 use rand::{Rng, thread_rng};
 use rand::distributions::{Distribution, Range};
-// use std::collections::BTreeMap;
+use std::collections::BTreeMap;
 // use std::cmp::Ordering;
 // use std::fmt;
 use std::mem;
@@ -19,6 +21,25 @@ pub type Gamete = Vec<Locus>;
 pub type Chromosome = Vec<Gamete>; // a haploid organism has a single gamete per chromosome, a diploid organism has two gametes per chromosome, and so forth
 pub type Individual = Vec<Chromosome>;
 
+fn individual_to_string(individual : &Individual) -> String {
+    let mut i_str : Vec<String> = Vec::new();
+    
+    for c in individual {
+        let mut c_str : Vec<String> = Vec::new();
+        for g in c {
+            let mut s = String::from("(");
+            s = s + &g.iter().map( |a| a.to_string() ).join(",");
+            s = s + ")";
+            c_str.push(s);
+        }
+        
+        let s = vec!["[", &c_str.join(", "), "]"].join("");
+        i_str.push(s);
+    }
+    
+    return i_str.join("\n");
+}
+    
 #[derive(Clone)]
 pub struct ChromosomeArchitecture {
     pub n_loci: usize,
@@ -131,22 +152,48 @@ impl Population {
         }
     }
 
-    // pub fn genotype_frequencies(&self) -> BTreeMap<Individual, f64> {
-    //     let mut counts: BTreeMap<Individual, f64> = BTreeMap::new();
-    
-    //     for genotype in &self.parents {
-    //         let count = counts.entry(*genotype).or_insert(0f64);
-    //         *count += 1.0f64;
-    //     }
+    pub fn genotype_counts(&self) -> Vec<Vec<BTreeMap<Vec<u8>, f64>>> {
+        let n_chromosomes = self.genetic_architecture.n_chromosomes;
+        let mut chromosome_counts: Vec<Vec<BTreeMap<Vec<u8>, f64>>> = Vec::with_capacity(n_chromosomes);
 
-    //     let sum: f64 = counts.values().sum();
+        let n_gametes = self.genetic_architecture.n_gametes;
+        for (c, chrom_arch) in self.genetic_architecture.chromosome_architectures.iter().enumerate() {
+            let n_loci = chrom_arch.n_loci;
+            let mut loci_genotype_counts: Vec<BTreeMap<Vec<u8>, f64>> = Vec::with_capacity(n_loci);
 
-    //     for (_, count) in &mut counts {
-    //         *count /= sum;
-    //     }
+            for l in 0..n_loci {
+                let mut genotype_counts: BTreeMap<Vec<u8>, f64> = BTreeMap::new();
+                let n_alleles = chrom_arch.n_alleles_per_locus[l];
 
-    //     counts
-    // }
+                for individual in &self.parents {
+                    let mut genotype: Vec<u8> = vec![0u8; n_alleles as usize];
+                    
+                    for g in 0..n_gametes {
+                        let allele = individual[c][g][l] as usize;
+                        genotype[allele] += 1u8;
+                    }
+
+                    
+                    let count = genotype_counts.entry(genotype).or_insert(0f64);
+                    *count += 1.0f64;
+                }
+
+                loci_genotype_counts.push(genotype_counts);
+            }
+            
+            chromosome_counts.push(loci_genotype_counts);
+        }
+        
+        // let sum: f64 = counts.values().sum();
+
+        // for (_, count) in &mut counts {
+        //     *count /= sum;
+        // }
+
+        // counts
+
+        chromosome_counts
+    }
 
     pub fn swap_generations(&mut self) -> () {
         mem::swap(&mut self.parents, &mut self.children);
@@ -219,7 +266,7 @@ impl IndividualSampler for UniformSampler {
 
 fn main() {
     let population_size = 100000;
-    let generations = 10;
+    let generations = 100;
     let n_gametes = 2usize;
 
     let mut rng = thread_rng();
@@ -236,12 +283,25 @@ fn main() {
                                          population_size,
                                          &mut sampler,
                                          &mut rng);
-    for _i in 0..generations {
-        // println!("Population: {}", i);
-        // for (genotype, freq) in &population.genotype_frequencies() {
-        //     println!("Genotype: {}, Frequency: {}", genotype, freq);
+    for i in 0..generations {
+        println!("Generation: {}", i);
+        let genotype_counts = population.genotype_counts();
+        for (c, chrom_counts) in genotype_counts.iter().enumerate() {
+            println!("Chromosome: {}", c);
+            for locus_counts in chrom_counts {
+                for (genotype, count) in locus_counts {
+                    let genotype_string = genotype.iter().map( |gt| gt.to_string() ).join(",");
+                    println!("Genotype: ({}), Count: {}", genotype_string, count);
+                }
+            }
+
+            println!();
+        }
+        
+        // for indiv in &population.parents {
+        //     println!("{}", individual_to_string(indiv));
+        //     println!();
         // }
-        // println!();
         
         population.mate(&mut rng);
         population.swap_generations();
