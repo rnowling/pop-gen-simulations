@@ -4,8 +4,10 @@ use rand::{Rng, thread_rng};
 use rand::distributions::{Distribution, Range};
 use std::collections::BTreeMap;
 use std::cmp::Ordering;
+use std::env;
 use std::fmt;
 use std::mem;
+use std::process;
 
 // Simulation of Hardy model
 //
@@ -149,19 +151,30 @@ impl Population {
 }
 
 fn main() {
-    let population_size = 100000;
-    let generations = 10;
+    let args : Vec<String> = env::args().collect();
+
+    // no args
+    if args.len() != 4 {
+        println!("Usage: {} pop_size n_generations output_period\n", &args[0]);
+        process::exit(1i32);
+    }
+    
+    let population_size = args[1].parse::<usize>().expect("pop_size is not an unsigned int!");
+    let generations = args[2].parse::<u32>().expect("n_generations is not an unsigned int!");
+    let output_period = args[3].parse::<u32>().expect("output period is not an unsigned int!");
 
     let mut rng = thread_rng();
 
     let mut population = Population::new(population_size,
                                      &mut rng);
     for i in 0..generations {
-        println!("Population: {}", i);
-        for (genotype, freq) in &population.genotype_frequencies() {
-            println!("Genotype: {}, Frequency: {}", genotype, freq);
+        if i % output_period == 0 {
+            println!("Population: {}", i);
+            for (genotype, freq) in &population.genotype_frequencies() {
+                println!("Genotype: {}, Frequency: {}", genotype, freq);
+            }
+            println!();
         }
-        println!();
         
         population.mate(&mut rng);
         population.swap_generations();
