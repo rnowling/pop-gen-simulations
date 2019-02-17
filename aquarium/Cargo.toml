@@ -1,0 +1,9 @@
+[package]
+name = "aquarium"
+version = "0.1.0"
+authors = ["RJ Nowling <rnowling@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.6.5"
+bit-set = "0.5.0"
