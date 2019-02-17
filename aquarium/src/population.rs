@@ -15,7 +15,49 @@ pub type Individual = (Chromosome, Chromosome);
 
 pub type Population = Vec<Individual>;
 
-pub fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) -> Option<Individual> {
+///
+/// Utility function for flipping a bit in a BitSet
+///
+fn flip_bit(alleles: &mut BitSet, i: usize) -> () {
+    if alleles.contains(i) {
+        alleles.remove(i);
+    } else {
+        alleles.insert(i);
+    }
+}
+
+///
+/// Simulates the mutation stage.  Every bit in the chromosome alleles is
+/// tested for mutation according to the mutation_rate probabilities given to
+/// the SimParameters.  If a mutation occurs, the bit is flipped.
+///
+fn run_mutation(chrom1: &mut Chromosome, chrom2: &mut Chromosome, params: &SimParameters) -> () {
+    let mut rng = rand::thread_rng();
+    
+    // mutate bits
+    for i in 0..params.chromosome_length {
+        if rng.gen_bool(params.mutation_rate) {
+            flip_bit(&mut chrom1.alleles, i);
+        }
+
+        if rng.gen_bool(params.mutation_rate) {
+            flip_bit(&mut chrom2.alleles, i);
+        }
+    }
+}
+
+
+///
+/// Produces a new individual from two parents. The basic steps include:
+///
+/// 1. Produce two gametes from each parent through recombination
+/// 2. Select one gamate from each parent
+/// 3. Mutate alleles at individual sites
+///
+/// This function returns an Option<Individual> as future versions may support
+/// evaluating an individual for being non-viable.
+///
+fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) -> Option<Individual> {
     let mut rng = rand::thread_rng();
 
     // TODO: recombination
@@ -31,29 +73,16 @@ pub fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) 
         false => parent2.1.clone(),
     };
 
-    // mutate bits
-    for i in 0..params.chromosome_length {
-        if rng.gen_bool(params.mutation_rate) {
-            if chrom1.alleles.contains(i) {
-                chrom1.alleles.remove(i);
-            } else {
-                chrom1.alleles.insert(i);
-            }
-        }
-
-        if rng.gen_bool(params.mutation_rate) {
-            if chrom2.alleles.contains(i) {
-                chrom2.alleles.remove(i);
-            } else {
-                chrom2.alleles.insert(i);
-            }
-        }
-    }
+    run_mutation(&mut chrom1, &mut chrom2, params);
 
     Some((chrom1, chrom2))
 }
 
-pub fn reproduce(population: &Population, params: &SimParameters) -> Population {
+///
+/// Produce a new generation of individuals for a population from an existing
+/// generation.  The generations will have the same number of individuals.
+///
+fn reproduce(population: &Population, params: &SimParameters) -> Population {
     let size = population.len();
     let mut next_generation: Vec<Individual> = Vec::with_capacity(size);
     let mut rng = rand::thread_rng();
@@ -75,7 +104,10 @@ pub fn reproduce(population: &Population, params: &SimParameters) -> Population 
     next_generation
 }
 
-pub fn randomly_generate_chromosome(params: &SimParameters) -> Chromosome {
+///
+/// Generate a new chromosome by randomly generating an allele for each site.
+///
+fn randomly_generate_chromosome(params: &SimParameters) -> Chromosome {
     let mut rng = rand::thread_rng();
 
     let mut alleles = BitSet::new();
@@ -91,7 +123,11 @@ pub fn randomly_generate_chromosome(params: &SimParameters) -> Chromosome {
     }
 }
 
-pub fn randomly_generate_population(params: &SimParameters) -> Population {
+///
+/// Generate a population of individuals by randomly generating two chromosomes
+/// for each individual.
+///
+fn randomly_generate_population(params: &SimParameters) -> Population {
     let mut individuals: Vec<Individual> = Vec::new();
     for _ in 0..params.n_individuals {
         let individual = (randomly_generate_chromosome(params),
@@ -102,13 +138,25 @@ pub fn randomly_generate_population(params: &SimParameters) -> Population {
     individuals
 }
 
+///
+/// Structure of simulation parameters.
+///
 #[derive(Clone)]
 pub struct SimParameters {
+    /// number of individuals in a single population
     pub n_individuals: usize,
+
+    /// number of sites per chromosome
     pub chromosome_length: usize,
-    pub mutation_rate: f64
+
+    /// probability of a mutation occuring given in a rate
+    /// of mutations per site / per generation
+    pub mutation_rate: f64,
 }
 
+///
+/// Structure for capturing the simulation state.
+///
 #[derive(Clone)]
 pub struct Simulation {
     pub params: SimParameters,
@@ -116,13 +164,19 @@ pub struct Simulation {
 }
 
 impl Simulation {
+    ///
+    /// Create a new simulation
+    ///
     pub fn new(params: SimParameters) -> Simulation {
         Simulation {
             params: params,
             current_generation: None,
         }
     }
-
+    
+    ///
+    /// Initialize simulation by generating an initial population
+    ///
     pub fn initialize(&mut self) -> () {
         println!("Initializing!");
         let population = randomly_generate_population(&self.params);
@@ -130,6 +184,9 @@ impl Simulation {
         self.current_generation = Some(population);
     }
 
+    ///
+    /// Simulate one generation
+    ///
     pub fn step(&mut self) -> () {
         println!("Stepping!");
         
@@ -139,6 +196,9 @@ impl Simulation {
         };
     }
 
+    ///
+    /// Print out all individuals
+    ///
     pub fn print(&mut self) -> () {
         match self.current_generation {
             Some(ref g) =>
@@ -158,7 +218,5 @@ impl Simulation {
                 },
             None => println!("Uninitialized!")
         }
-    }
-
-            
+    }            
 }
