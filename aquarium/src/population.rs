@@ -32,42 +32,51 @@ fn flip_bit(alleles: &mut BitSet, i: usize) -> () {
 /// tested for mutation according to the mutation_rate probabilities given to
 /// the SimParameters.  If a mutation occurs, the bit is flipped.
 ///
-fn run_mutation(chrom1: &mut Chromosome, chrom2: &mut Chromosome, params: &SimParameters) -> () {
+fn mutate(chrom: &mut Chromosome, params: &SimParameters) -> () {
     let mut rng = rand::thread_rng();
     
     // mutate bits
     for i in 0..params.chromosome_length {
         if rng.gen_bool(params.mutation_rate) {
-            flip_bit(&mut chrom1.alleles, i);
-        }
-
-        if rng.gen_bool(params.mutation_rate) {
-            flip_bit(&mut chrom2.alleles, i);
+            flip_bit(&mut chrom.alleles, i);
         }
     }
 }
 
-
 ///
-/// Produces a new individual from two parents. The basic steps include:
+/// Produces a (haploid) gamete from a (diploid) parent. The basic steps include:
 ///
-/// 1. Produce two gametes from each parent through recombination
-/// 2. Select one gamate from each parent
-/// 3. Mutate alleles at individual sites
+/// 1. Randomly choose one chromosome as the gamete
+/// 2. Mutate alleles at individual sites
 ///
-/// This function returns an Option<Individual> as future versions may support
-/// evaluating an individual for being non-viable.
+/// This function should eventually support recombination of the parents
+/// chromosomes to produce the gamete.
 ///
-fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) -> Option<Individual> {
+fn create_gamete(parent: &Individual, params: &SimParameters) -> Chromosome {
     let mut rng = rand::thread_rng();
 
     // TODO: recombination
 
-    // choose chromosome pairs
-    let mut chrom1 = parent1.choose(&mut rng).unwrap().clone();
-    let mut chrom2 = parent2.choose(&mut rng).unwrap().clone();
+    let mut gamete = parent.choose(&mut rng).unwrap().clone();
 
-    run_mutation(&mut chrom1, &mut chrom2, params);
+    mutate(&mut gamete, params);
+
+    gamete
+}
+
+///
+/// Mates two parents to produce an offspring.  The basic steps include:
+///
+/// 1. A gamete is created for each parent
+/// 2. The individual is formed and returned
+///
+/// This function returns an Option<Individual> as future versions may support
+/// evaluating an individual for being non-viable.
+///
+
+fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) -> Option<Individual> {
+    let chrom1 = create_gamete(parent1, params);
+    let chrom2 = create_gamete(parent2, params);
 
     Some([chrom1, chrom2])
 }
