@@ -1,10 +1,8 @@
 mod population;
 
 fn main() {
-    println!("Hello, world!");
-
     let params = population::SimParameters {
-        n_individuals: 10,
+        n_individuals: 100,
         chromosome_length: 20,
         mutation_rate: 1e-3,
         population_initialization_strategy: population::PopulationInitializationStrategy::ClonedFromSingleIndividual
@@ -14,9 +12,10 @@ fn main() {
     
     sim.initialize();
     sim.print();
-    for _ in 1..40 {
+    println!();
+    for _ in 1..10 {
         sim.step();
         sim.print();
+        println!();
     }
-    
 }

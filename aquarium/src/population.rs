@@ -147,7 +147,11 @@ fn randomly_generate_population(params: &SimParameters) -> Population {
 fn clone_population(params: &SimParameters) -> Population {
     let mut individuals: Vec<Individual> = Vec::with_capacity(params.n_individuals);
 
-    let chrom = randomly_generate_chromosome(params);
+    let chrom = Chromosome {
+        alleles: BitSet::new(),
+        inverted: false
+    };
+
     let individual = [chrom.clone(), chrom.clone()];
 
     for _ in 0..params.n_individuals {
@@ -161,8 +165,8 @@ fn clone_population(params: &SimParameters) -> Population {
 ///
 /// Strategy for initializing the population
 ///
-/// ClonedFromSingleIndividual: Randomly generate a chromosome. Founding individual
-/// has two copies of chromosome.  All individuals are clones of the founder.
+/// ClonedFromSingleIndividual: Founding individual has two empty chromosomes.  All
+/// individuals are clones of the founder.
 ///
 /// AllRandomIndividuals: For each individual, randomly generate a chromosome and
 /// create two copies.
@@ -250,14 +254,13 @@ impl Simulation {
                     for i in indiv[0].alleles.iter() {
                         print!("{}, ", i);
                     }
-                    println!("]");
+                    print!("] ");
                     
                     print!("[");
                     for i in indiv[1].alleles.iter() {
                         print!("{}, ", i);
                     }
-                    println!("]");
-                    println!();
+                    println!("]  ");
                 },
             None => println!("Uninitialized!")
         }
