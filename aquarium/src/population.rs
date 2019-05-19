@@ -4,6 +4,7 @@ extern crate rand;
 use bit_set::BitSet;
 
 use rand::prelude::*;
+use rand::seq::SliceRandom;
 
 #[derive(Clone)]
 pub struct Chromosome {
@@ -11,7 +12,7 @@ pub struct Chromosome {
     pub inverted: bool,
 }
 
-pub type Individual = (Chromosome, Chromosome);
+pub type Individual = [Chromosome; 2];
 
 pub type Population = Vec<Individual>;
 
@@ -63,19 +64,12 @@ fn mate(parent1: &Individual, parent2: &Individual, params: &SimParameters) -> O
     // TODO: recombination
 
     // choose chromosome pairs
-    let mut chrom1 = match rng.gen_bool(0.5) {
-        true => parent1.0.clone(),
-        false => parent1.1.clone(),
-    };
-        
-    let mut chrom2 = match rng.gen_bool(0.5) {
-        true => parent2.0.clone(),
-        false => parent2.1.clone(),
-    };
+    let mut chrom1 = parent1.choose(&mut rng).unwrap().clone();
+    let mut chrom2 = parent2.choose(&mut rng).unwrap().clone();
 
     run_mutation(&mut chrom1, &mut chrom2, params);
 
-    Some((chrom1, chrom2))
+    Some([chrom1, chrom2])
 }
 
 ///
@@ -130,8 +124,8 @@ fn randomly_generate_chromosome(params: &SimParameters) -> Chromosome {
 fn randomly_generate_population(params: &SimParameters) -> Population {
     let mut individuals: Vec<Individual> = Vec::new();
     for _ in 0..params.n_individuals {
-        let individual = (randomly_generate_chromosome(params),
-                          randomly_generate_chromosome(params));
+        let individual = [randomly_generate_chromosome(params),
+                          randomly_generate_chromosome(params)];
         individuals.push(individual);
     }
 
@@ -204,13 +198,13 @@ impl Simulation {
             Some(ref g) =>
                 for ref indiv in g {
                     print!("[");
-                    for i in indiv.0.alleles.iter() {
+                    for i in indiv[0].alleles.iter() {
                         print!("{}, ", i);
                     }
                     println!("]");
                     
                     print!("[");
-                    for i in indiv.1.alleles.iter() {
+                    for i in indiv[1].alleles.iter() {
                         print!("{}, ", i);
                     }
                     println!("]");
