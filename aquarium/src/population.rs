@@ -133,13 +133,46 @@ fn randomly_generate_chromosome(params: &SimParameters) -> Chromosome {
 fn randomly_generate_population(params: &SimParameters) -> Population {
     let mut individuals: Vec<Individual> = Vec::new();
     for _ in 0..params.n_individuals {
-        let individual = [randomly_generate_chromosome(params),
-                          randomly_generate_chromosome(params)];
+        let chrom = randomly_generate_chromosome(params);
+        let individual = [chrom.clone(), chrom.clone()];
         individuals.push(individual);
     }
 
     individuals
 }
+
+///
+/// Clone a population from a single randomly-generated individual.
+///
+fn clone_population(params: &SimParameters) -> Population {
+    let mut individuals: Vec<Individual> = Vec::with_capacity(params.n_individuals);
+
+    let chrom = randomly_generate_chromosome(params);
+    let individual = [chrom.clone(), chrom.clone()];
+
+    for _ in 0..params.n_individuals {
+        individuals.push(individual.clone());
+    }
+
+    individuals
+}
+
+
+///
+/// Strategy for initializing the population
+///
+/// ClonedFromSingleIndividual: Randomly generate a chromosome. Founding individual
+/// has two copies of chromosome.  All individuals are clones of the founder.
+///
+/// AllRandomIndividuals: For each individual, randomly generate a chromosome and
+/// create two copies.
+///
+#[derive(Clone)]
+pub enum PopulationInitializationStrategy {
+    ClonedFromSingleIndividual,
+    AllRandomIndividuals
+}
+
 
 ///
 /// Structure of simulation parameters.
@@ -155,6 +188,9 @@ pub struct SimParameters {
     /// probability of a mutation occuring given in a rate
     /// of mutations per site / per generation
     pub mutation_rate: f64,
+
+    /// strategy for creating initial individuals in the population
+    pub population_initialization_strategy: PopulationInitializationStrategy,
 }
 
 ///
@@ -173,7 +209,7 @@ impl Simulation {
     pub fn new(params: SimParameters) -> Simulation {
         Simulation {
             params: params,
-            current_generation: None,
+            current_generation: None
         }
     }
     
@@ -182,7 +218,11 @@ impl Simulation {
     ///
     pub fn initialize(&mut self) -> () {
         println!("Initializing!");
-        let population = randomly_generate_population(&self.params);
+        let strategy = &self.params.population_initialization_strategy;
+        let population = match strategy {
+            PopulationInitializationStrategy::ClonedFromSingleIndividual => clone_population(&self.params),
+            PopulationInitializationStrategy::AllRandomIndividuals => randomly_generate_population(&self.params)
+        };
         
         self.current_generation = Some(population);
     }
