@@ -1,7 +1,9 @@
 mod config;
+mod fileio;
 mod population;
 
 use config::*;
+use fileio::*;
 use population::*;
 
 fn main() {
@@ -17,9 +19,14 @@ fn main() {
     sim.initialize();
     sim.print();
     println!();
-    for _ in 1..100 {
+    for _ in 1..1000 {
         sim.step();
-        sim.print();
-        println!();
+        //sim.print();
+        //println!();
     }
+
+    sim.print();
+    println!();
+
+    write_genotypes("genotypes.tsv", sim.to_matrix().unwrap());
 }
