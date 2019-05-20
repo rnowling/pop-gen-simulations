@@ -1,5 +1,5 @@
-pub mod config;
-pub mod population;
+mod config;
+mod population;
 
 use config::*;
 use population::*;
