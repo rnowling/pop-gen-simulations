@@ -6,6 +6,8 @@ use bit_set::BitSet;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 
+use std::collections::HashMap;
+
 use super::config::*;
 
 #[derive(Clone)]
@@ -230,5 +232,42 @@ impl Simulation {
                 },
             None => println!("Uninitialized!")
         }
-    }            
+    }
+
+    pub fn to_matrix(&self) -> Option<HashMap<usize, Vec<u8>>> {
+        match self.current_generation {
+            None => None,
+            Some(ref g) => {
+                let n_individuals = self.params.n_individuals;
+
+                let mut matrix : HashMap<usize, Vec<u8>> = HashMap::new();
+
+                for (idx, individual) in g.iter().enumerate() {
+                    for pos in individual[0].alleles.iter() {
+                        match matrix.get_mut(&pos) {
+                            Some(ref mut genotype_counts) => genotype_counts[idx] += 1,
+                            None => {
+                                let mut genotype_counts = vec![0u8; n_individuals];
+                                genotype_counts[idx] += 1;
+                                matrix.insert(pos, genotype_counts);
+                            }
+                        }
+                    }
+
+                    for pos in individual[1].alleles.iter() {
+                        match matrix.get_mut(&pos) {
+                            Some(ref mut genotype_counts) => genotype_counts[idx] += 1,
+                            None => {
+                                let mut genotype_counts = vec![0u8; n_individuals];
+                                genotype_counts[idx] += 1;
+                                matrix.insert(pos, genotype_counts);
+                            }
+                        }
+                    }
+                }
+
+                Some(matrix)
+            }
+        }
+    }
 }
