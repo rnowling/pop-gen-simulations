@@ -48,7 +48,12 @@ fn main() {
     for i in 1..n_steps {
         sim.step();
         if i % 100 == 0 {
-            println!("Stepping!")
+            println!("Trimming!");
+            sim.print();
+            println!();
+            sim.trim();
+            sim.print();
+            println!();
         }
     }
 

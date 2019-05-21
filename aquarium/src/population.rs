@@ -210,6 +210,46 @@ impl Simulation {
     }
 
     ///
+    /// Identifies and removes positions where all samples are
+    /// homozygous.
+    ///
+    pub fn trim(&mut self) -> () {
+        let matrix_option = self.to_matrix();
+
+        if matrix_option.is_none() {
+            return;
+        }
+
+        let matrix = matrix_option.unwrap();
+        let current_generation = self.current_generation.as_ref().unwrap();
+        
+        let mut fixed = BitSet::new();
+
+        // find positions
+        for (pos, genotypes) in matrix {
+            let sum = genotypes.iter()
+                .fold(0usize, |sum, val| sum + *val as usize);
+                    
+            // 2 chromosomes per individual
+            if sum == 2 * self.params.n_individuals {
+                fixed.insert(pos);
+            }
+        }
+
+        // filter out mutations
+        let mut trimmed = Vec::with_capacity(self.params.n_individuals);
+        for ref indiv in current_generation {
+            let mut chrom1 = indiv[0].clone();
+            let mut chrom2 = indiv[1].clone();
+            chrom1.alleles.difference_with(&fixed);
+            chrom2.alleles.difference_with(&fixed);
+            trimmed.push([chrom1, chrom2]);
+        }
+        
+        self.current_generation = Some(trimmed);
+    }
+
+    ///
     /// Print out all individuals
     ///
     pub fn print(&mut self) -> () {
@@ -220,13 +260,13 @@ impl Simulation {
                     for i in indiv[0].alleles.iter() {
                         print!("{}, ", i);
                     }
-                    print!("] ");
+                    print!("], ");
                     
                     print!("[");
                     for i in indiv[1].alleles.iter() {
                         print!("{}, ", i);
                     }
-                    println!("]  ");
+                    println!("] ");
                 },
             None => println!("Uninitialized!")
         }
