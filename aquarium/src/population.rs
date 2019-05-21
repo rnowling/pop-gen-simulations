@@ -8,7 +8,7 @@ use rand::seq::SliceRandom;
 
 use std::collections::HashMap;
 
-use super::config::*;
+use super::parameters::*;
 
 #[derive(Clone)]
 pub struct Chromosome {
@@ -203,8 +203,6 @@ impl Simulation {
     /// Simulate one generation
     ///
     pub fn step(&mut self) -> () {
-        println!("Stepping!");
-        
         self.current_generation = match self.current_generation {
             None => None,
             Some(ref g) => Some(reproduce(g, &self.params)),

@@ -1,16 +1,42 @@
-mod config;
+extern crate config;
+
+mod parameters;
 mod fileio;
 mod population;
 
-use config::*;
+use std::env;
+use std::process;
+
+use config::{Config, File};
+
 use fileio::*;
+use parameters::*;
 use population::*;
 
+fn print_usage() {
+
+}
+
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() == 1 {
+        print_usage();
+        process::exit(0);
+    }
+
+    let config_filename = &args[1];
+    
+    let mut config = Config::new();
+    config.merge(File::with_name(config_filename).required(true)).unwrap();
+
+    let n_steps = config.get::<usize>("n_steps").unwrap();
+    let output_file = config.get::<String>("output_file").unwrap();
+    
     let params = SimParameters {
-        n_individuals: 100,
-        chromosome_length: 20,
-        mutation_rate: 1e-3,
+        n_individuals: config.get::<usize>("n_individuals").unwrap(),
+        chromosome_length: config.get::<usize>("chromosome_length").unwrap(),
+        mutation_rate: config.get::<f64>("mutation_rate").unwrap(),
         population_initialization_strategy: PopulationInitializationStrategy::ClonedFromSingleIndividual
     };
     
@@ -19,14 +45,15 @@ fn main() {
     sim.initialize();
     sim.print();
     println!();
-    for _ in 1..1000 {
+    for i in 1..n_steps {
         sim.step();
-        //sim.print();
-        //println!();
+        if i % 100 == 0 {
+            println!("Stepping!")
+        }
     }
 
     sim.print();
     println!();
 
-    write_genotypes("genotypes.tsv", sim.to_matrix().unwrap());
+    write_genotypes(&output_file, sim.to_matrix().unwrap());
 }
