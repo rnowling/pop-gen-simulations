@@ -57,6 +57,7 @@ fn main() {
         }
     }
 
+    sim.trim();
     sim.print();
     println!();
 
