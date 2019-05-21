@@ -4,6 +4,11 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
 
+
+///
+/// Write genotype matrix to a TSV file.  The first column gives the positions
+/// while the remaining columns give the number of mutated alleles per individual.
+///
 pub fn write_genotypes(filename: &str, matrix: HashMap<usize, Vec<u8>>) -> () {
     let file = File::create(filename).unwrap();
     let mut file = BufWriter::new(file);

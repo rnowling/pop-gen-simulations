@@ -232,6 +232,11 @@ impl Simulation {
         }
     }
 
+    ///
+    /// Convert mutations to a sparse matrix of genotypes.
+    /// The keys of the resulting map are the positions, while
+    /// the values are vectors of the individuals' genotypes.
+    ///
     pub fn to_matrix(&self) -> Option<HashMap<usize, Vec<u8>>> {
         match self.current_generation {
             None => None,
