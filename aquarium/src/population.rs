@@ -65,29 +65,25 @@ fn recombine(parent: &Individual, params: &SimParameters) -> Chromosome {
     // if there are no mutations, then return an empty chromosome
     let alleles = if alleles1.is_empty() && alleles2.is_empty() {
         BitSet::new()
-    } else {
+    } else if params.recombination_rate > 0.0 && rng.gen_bool(params.recombination_rate) {
         // otherwise, flip a coin to determine if recombination is happening
-        match rng.gen_bool(params.recombination_rate) {
-            true => {
-                let mut mutant_pos = alleles1.union(alleles2).collect::<Vec<usize>>();
-                mutant_pos.sort();
+        let mut mutant_pos = alleles1.union(alleles2).collect::<Vec<usize>>();
+        mutant_pos.sort();
 
-                let mut gamete = BitSet::new();
+        let mut gamete = BitSet::new();
 
-                let crossover_pos = *mutant_pos.choose(&mut rng).unwrap();
-                for pos in mutant_pos {
-                    if (pos <= crossover_pos && alleles1.contains(pos)) ||
-                        (pos > crossover_pos && alleles2.contains(pos))
-                    {
-                        gamete.insert(pos);
-                    }
-                }
-
-                gamete
-            },
-
-            false => parent.choose(&mut rng).unwrap().alleles.clone()
+        let crossover_pos = *mutant_pos.choose(&mut rng).unwrap();
+        for pos in mutant_pos {
+            if (pos <= crossover_pos && alleles1.contains(pos)) ||
+                (pos > crossover_pos && alleles2.contains(pos))
+            {
+                gamete.insert(pos);
+            }
         }
+
+        gamete
+    } else {
+        parent.choose(&mut rng).unwrap().alleles.clone()
     };
 
     Chromosome { alleles: alleles, inverted: false }
