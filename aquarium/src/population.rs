@@ -48,20 +48,60 @@ fn mutate(chrom: &mut Chromosome, params: &SimParameters) -> () {
 }
 
 ///
-/// Produces a (haploid) gamete from a (diploid) parent. The basic steps include:
+/// Perform recombination between a parent's chromosomes.
 ///
-/// 1. Randomly choose one chromosome as the gamete
-/// 2. Mutate alleles at individual sites
-///
-/// This function should eventually support recombination of the parents
-/// chromosomes to produce the gamete.
-///
-fn create_gamete(parent: &Individual, params: &SimParameters) -> Chromosome {
+/// 1. If neither chromosome has mutations, return an empty chromosome
+/// 3. Flip a coin to determine if recombination is happening
+/// 3. If true, find a crossover position.  Take mutants from chromosome 1
+///    for positions <= crossover position and chromosome 2 for positions
+///    > crossover position.
+/// 4. If false, randomly pick one of the chromosomes
+fn recombine(parent: &Individual, params: &SimParameters) -> Chromosome {
     let mut rng = rand::thread_rng();
 
-    // TODO: recombination
+    let alleles1 = &parent[0].alleles;
+    let alleles2 = &parent[1].alleles;
 
-    let mut gamete = parent.choose(&mut rng).unwrap().clone();
+    // if there are no mutations, then return an empty chromosome
+    let alleles = if alleles1.is_empty() && alleles2.is_empty() {
+        BitSet::new()
+    } else {
+        // otherwise, flip a coin to determine if recombination is happening
+        match rng.gen_bool(params.recombination_rate) {
+            true => {
+                let mut mutant_pos = alleles1.union(alleles2).collect::<Vec<usize>>();
+                mutant_pos.sort();
+
+                let mut gamete = BitSet::new();
+
+                let crossover_pos = *mutant_pos.choose(&mut rng).unwrap();
+                for pos in mutant_pos {
+                    if (pos <= crossover_pos && alleles1.contains(pos)) ||
+                        (pos > crossover_pos && alleles2.contains(pos))
+                    {
+                        gamete.insert(pos);
+                    }
+                }
+
+                gamete
+            },
+
+            false => parent.choose(&mut rng).unwrap().alleles.clone()
+        }
+    };
+
+    Chromosome { alleles: alleles, inverted: false }
+}
+
+
+///
+/// Produces a (haploid) gamete from a (diploid) parent. The basic steps include:
+///
+/// 1. Generate a new gamete through recombination
+/// 2. Mutate alleles at individual sites
+///
+fn create_gamete(parent: &Individual, params: &SimParameters) -> Chromosome {
+    let mut gamete = recombine(parent, params);
 
     mutate(&mut gamete, params);
 

@@ -26,9 +26,13 @@ pub struct SimParameters {
     pub chromosome_length: usize,
 
     /// probability of a mutation occuring given in a rate
-    /// of mutations per site / per generation
+    /// of mutations per site per generation
     pub mutation_rate: f64,
 
     /// strategy for creating initial individuals in the population
     pub population_initialization_strategy: PopulationInitializationStrategy,
+
+    /// probability of a recombination given in a rate
+    /// of recombination events per gamete per generation
+    pub recombination_rate: f64,
 }

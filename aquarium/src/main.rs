@@ -37,6 +37,7 @@ fn main() {
         n_individuals: config.get::<usize>("n_individuals").unwrap(),
         chromosome_length: config.get::<usize>("chromosome_length").unwrap(),
         mutation_rate: config.get::<f64>("mutation_rate").unwrap(),
+        recombination_rate: config.get::<f64>("recombination_rate").unwrap(),
         population_initialization_strategy: PopulationInitializationStrategy::ClonedFromSingleIndividual
     };
     
