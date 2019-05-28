@@ -4,6 +4,7 @@ extern crate config;
 // to be seen by each other
 mod fileio;
 mod model;
+mod mutation;
 mod parameters;
 mod population;
 
