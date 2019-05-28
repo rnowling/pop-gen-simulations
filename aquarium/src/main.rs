@@ -7,10 +7,9 @@ mod mating;
 mod model;
 mod mutation;
 mod parameters;
-mod population;
 mod population_founding;
 mod recombination;
-
+mod simulation;
 
 use std::env;
 use std::process;
@@ -19,7 +18,7 @@ use config::{Config, File};
 
 use fileio::*;
 use parameters::*;
-use population::*;
+use simulation::*;
 
 fn print_usage() {
 
