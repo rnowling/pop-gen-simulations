@@ -17,8 +17,8 @@ use super::population_founding::*;
 ///
 #[derive(Clone)]
 pub struct Simulation {
-    pub params: SimParameters,
-    pub current_generation: Option<Population>,
+    params: SimParameters,
+    current_generation: Option<Population>,
 }
 
 impl Simulation {
