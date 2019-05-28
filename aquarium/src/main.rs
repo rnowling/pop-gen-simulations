@@ -7,6 +7,7 @@ mod model;
 mod mutation;
 mod parameters;
 mod population;
+mod recombination;
 
 
 use std::env;
