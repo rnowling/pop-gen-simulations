@@ -7,6 +7,7 @@ mod model;
 mod mutation;
 mod parameters;
 mod population;
+mod population_founding;
 mod recombination;
 
 
