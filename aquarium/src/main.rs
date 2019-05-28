@@ -3,6 +3,7 @@ extern crate config;
 // all modules need to be defined here
 // to be seen by each other
 mod fileio;
+mod mating;
 mod model;
 mod mutation;
 mod parameters;
