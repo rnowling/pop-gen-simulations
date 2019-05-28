@@ -1,8 +1,12 @@
 extern crate config;
 
-mod parameters;
+// all modules need to be defined here
+// to be seen by each other
 mod fileio;
+mod model;
+mod parameters;
 mod population;
+
 
 use std::env;
 use std::process;

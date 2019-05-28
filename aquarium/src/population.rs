@@ -4,21 +4,12 @@ extern crate rand;
 use bit_set::BitSet;
 
 use rand::prelude::*;
-use rand::seq::SliceRandom;
+// use rand::seq::SliceRandom;
 
 use std::collections::HashMap;
 
+use super::model::*;
 use super::parameters::*;
-
-#[derive(Clone)]
-pub struct Chromosome {
-    pub alleles: BitSet,
-    pub inverted: bool,
-}
-
-pub type Individual = [Chromosome; 2];
-
-pub type Population = Vec<Individual>;
 
 ///
 /// Utility function for flipping a bit in a BitSet
