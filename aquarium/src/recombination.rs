@@ -48,3 +48,75 @@ pub fn recombine(parent: &Individual, params: &SimParameters) -> Chromosome {
 
     Chromosome { alleles: alleles, inverted: false }
 }
+
+
+trait RecombinationStrategy {
+    fn new(params: SimParameters) -> Self;
+
+    fn recombine(self, parent: &Individual) -> Chromosome;
+}
+
+struct UniformRandomRecombinationStrategy {
+    params: SimParameters
+}
+
+impl RecombinationStrategy for UniformRandomRecombinationStrategy {
+    fn new(params: SimParameters) -> UniformRandomRecombinationStrategy {
+        UniformRandomRecombinationStrategy {
+            params: params
+        }
+    }
+
+    fn recombine(self, parent: &Individual) -> Chromosome {
+        let mut rng = rand::thread_rng();
+
+        let alleles1 = &parent[0].alleles;
+        let alleles2 = &parent[1].alleles;
+
+        // if there are no mutations, then return an empty chromosome
+        let alleles = if alleles1.is_empty() && alleles2.is_empty() {
+            BitSet::new()
+        } else if self.params.recombination_rate > 0.0 &&
+            rng.gen_bool(self.params.recombination_rate) {
+
+            // otherwise, flip a coin to determine if recombination is happening
+            let mut mutant_pos = alleles1.union(alleles2).collect::<Vec<usize>>();
+            mutant_pos.sort();
+
+            let mut gamete = BitSet::new();
+
+            let crossover_pos = *mutant_pos.choose(&mut rng).unwrap();
+            for pos in mutant_pos {
+                if (pos <= crossover_pos && alleles1.contains(pos)) ||
+                    (pos > crossover_pos && alleles2.contains(pos))
+                {
+                    gamete.insert(pos);
+                }
+            }
+
+            gamete
+        } else {
+            parent.choose(&mut rng).unwrap().alleles.clone()
+        };
+
+        Chromosome { alleles: alleles, inverted: false }
+    }
+}
+
+struct RandomChoiceRecombinationStrategy {
+}
+
+impl RecombinationStrategy for RandomChoiceRecombinationStrategy {
+    fn new(_params: SimParameters) -> RandomChoiceRecombinationStrategy {
+        RandomChoiceRecombinationStrategy {
+        }
+    }
+
+    fn recombine(self, parent: &Individual) -> Chromosome {
+        let mut rng = rand::thread_rng();
+
+        let idx = rng.gen_range(0, 2);
+
+        parent[idx].clone()
+    }
+}

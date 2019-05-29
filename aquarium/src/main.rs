@@ -45,7 +45,8 @@ fn main() {
         chromosome_length: config.get::<usize>("chromosome_length").unwrap(),
         mutation_rate: config.get::<f64>("mutation_rate").unwrap(),
         recombination_rate: config.get::<f64>("recombination_rate").unwrap(),
-        population_initialization_strategy: PopulationInitializationStrategy::ClonedFromSingleIndividual
+        population_initialization_strategy: PopulationInitializationStrategy::ClonedFromSingleIndividual,
+        mating_strategy: MatingStrategy::RandomMating
     };
     
     let mut sim = Simulation::new(params);

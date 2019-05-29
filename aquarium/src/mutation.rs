@@ -33,3 +33,34 @@ pub fn mutate(chrom: &mut Chromosome, params: &SimParameters) -> () {
         }
     }
 }
+
+trait MutationStrategy {
+    fn new(params: SimParameters) -> Self;
+
+    fn reproduce(self, gamete: &mut Chromosome) -> ();
+}
+
+// I should find the proper name for this
+struct RandomMutationStrategy {
+    params: SimParameters,
+}
+
+impl MutationStrategy for RandomMutationStrategy {
+    fn new(params: SimParameters) -> RandomMutationStrategy {
+        RandomMutationStrategy {
+            params: params
+        }
+    }
+
+    fn reproduce(self, gamete: &mut Chromosome) -> () {
+        let mut rng = rand::thread_rng();
+    
+        // mutate bits
+        for i in 0..self.params.chromosome_length {
+            if rng.gen_bool(self.params.mutation_rate) {
+                flip_bit(&mut gamete.alleles, i);
+            }
+        }
+    }
+}
+
